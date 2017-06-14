@@ -276,6 +276,11 @@ class CollectdPlugin(object):
         collectd.debug("Dispatching queue data for {0}".format(vhost_name))
         stats = self.rabbit.get_queue_stats(vhost_name=vhost_name)
         for queue_name, value in stats.iteritems():
+            # skip temporary queues metrics to avoid spam https://www.rabbitmq.com/tutorials/tutorial-three-python.html
+            if "amq.gen" in queue_name:
+                collectd.debug("Skipping queue stats for %s in %s" % (queue_name, vhost_name))
+                return
+
             self.dispatch_message_stats(value, vhost_name, 'queues',
                                         queue_name)
             self.dispatch_queue_stats(value, vhost_name, 'queues',
